@@ -1,0 +1,102 @@
+I'm working on a simple employee directory using HTML, Bootstrap, and JavaScript. The data is fetched from the https://dummyjson.com/users API. I added a search function that filters employees by last name, and there's also an input listener for live filtering as the user types.
+
+Here is a simplified version of the code:
+
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dolgozóink</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <script src="jquery.slim.min.js"></script>
+    <script src="popper.min.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
+    <style>
+      .card img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+
+      .card h5,
+      .card p {
+        margin: 0;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container py-4 text-center">
+      <h1>Dolgozóink</h1>
+      <input
+        type="text"
+        id="searchInput"
+        class="form-control my-3"
+        placeholder="Vezetéknév keresése"
+      />
+      <!-- Ezt használd ha gombbal akarsz keresni (az addEventListener-t NE!!) -->
+      <button
+        onclick="filterEmployees()"
+        class="btn btn-primary"
+        style="margin-bottom: 20px"
+      >
+        Keresés
+      </button>
+      <div id="employeeContainer" class="row g-3 justify-content-center"></div>
+      <div id="errorMsg" class="text-danger fw-bold mt-3"></div>
+    </div>
+
+    <script>
+      let employees = [];
+
+      async function fetchEmployees() {
+        try {
+          const res = await fetch("https://dummyjson.com/users?limit=50");
+          const { users } = await res.json();
+          employees = users;
+          /*
+          const data = await res.json();
+          employees = data.results; vagy employees = data;
+          */
+          show(users);
+        } catch (error) {
+          document.getElementById("errorMsg").textContent =
+            " Hiba az adatok lekérése közben!";
+          console.error("API-hiba:", error);
+        }
+      }
+
+      function show(users) {
+        document.getElementById("employeeContainer").innerHTML = users
+          .map(
+            (u) => `
+        <div class="col-md-6 col-sm-12">
+          <div class="card d-flex flex-row align-items-center p-2">
+            <img src="${u.image}" alt="">
+            <div>
+              <h5>${u.firstName} ${u.lastName}</h5>
+              <p>${u.email}</p>
+              <p>${u.phone}</p>
+            </div>
+          </div>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      function filterEmployees() {
+        const val = searchInput.value.toLowerCase();
+        show(employees.filter((u) => u.lastName.toLowerCase().includes(val)));
+      }
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", filterEmployees); //Ezt használd ha azonnali keresést akarsz gépelés közben (a gombot NE!!)
+      window.onload = fetchEmployees;
+    </script>
+  </body>
+</html>

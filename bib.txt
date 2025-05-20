@@ -1,0 +1,84 @@
+Program.cs
+
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<IngatlanContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var app = builder.Build();
+Appsettings.json
+
+{
+  "ConnectionStrings": {
+    "Def": "Data Source=Ingatlan.db"
+  },
+
+Context.cs:
+
+public class IngatlanContext : DbContext
+{
+  public IngatlanContext(DbContextOptions<IngatlanContext> options) : base(options)
+  {
+
+  }
+  public DbSet<Ingatlan> Ingatlanok { get; set; } = null!;
+  public DbSet<Kategoria> Kategoriak { get; set; } = null!;
+}
+Dto:
+
+public class IngatlanGetDto
+{
+  public int Id { get; set; }
+  public string? Leiras { get; set; }
+  public DateTime HirdetesKezdete { get; set; }
+  public DateTime HirdetesVege { get; set; }
+  public int Ar { get; set; }
+  public bool Hitelkepes { get; set; }
+  public string? KategoriaNeve { get; set; }
+}
+
+DTO from controller
+
+
+        // GET: api/Ingatlanok
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<IngatlanGetDto>>> GetIngatlanok()
+        {
+            var ingatlanok = await _context.Ingatlanok
+                .Include(i => i.Kategoria)
+                .Select(i => new
+                {
+                    i.Leiras,
+                    HirdetesKezdete=i.HirdetesKezdete.ToString("yyyy-MM-dd"),
+                    HirdetesVege=i.HirdetesVege.ToString("yyyy-MM-dd"),
+                    i.Ar,
+                    i.Hitelkepes,
+                    KategoriaNeve=i.Kategoria.Nev,
+                }).ToListAsync();
+
+            return Ok(ingatlanok);
+
+        }
+
+        // GET: api/Ingatlanok/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<object>> GetIngatlan(int id)
+        {
+            var ingatlan = await _context.Ingatlanok
+                .Include(i => i.Kategoria)
+                .Where(i => i.Id == id) 
+                .Select(i => new
+                {
+                    i.Leiras,
+                    HirdetesKezdete = i.HirdetesKezdete.ToString("yyyy-MM-dd"),
+                    HirdetesVege = i.HirdetesVege.ToString("yyyy-MM-dd"),
+                    i.Ar,
+                    i.Hitelkepes,
+                    KategoriaNeve = i.Kategoria.Nev,
+                }).FirstOrDefaultAsync();
+
+            return Ok(ingatlan);
+        }
+How to
+Kategoria (1) - Ingatlan (N)
+N: [ForeignKey("KategoriaId")] public Kategoria? Kategoria { get; set; }
+1: [JsonIgnore] public List? Ingatlanok { get; set; }
